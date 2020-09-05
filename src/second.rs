@@ -1,24 +1,24 @@
-pub struct List {
-    head: Link,
+pub struct List<T> {
+    head: Link<T>,
 }
 
 // enum Link {
 //     Empty,
 //     More(Box<Node>),
 // }
-type Link = Option<Box<Node>>;
+type Link<T> = Option<Box<Node<T>>>;
 
-struct Node {
-    elem: i32,
-    next: Link,
+struct Node<T> {
+    elem: T,
+    next: Link<T>,
 }
 
-impl List {
+impl<T> List<T> {
     pub fn new() -> Self {
         List { head: None }
     }
 
-    pub fn push(&mut self, elem: i32) {
+    pub fn push(&mut self, elem: T) {
         let new_node = Box::new(Node {
             elem: elem,
             // next: mem::replace(&mut self.head, None),
@@ -28,7 +28,7 @@ impl List {
         self.head = Some(new_node);
     }
 
-    pub fn pop(&mut self) -> Option<i32> {
+    pub fn pop(&mut self) -> Option<T> {
         // let old_value = mem::replace(&mut self.head, None);
         let old_value = self.head.take();
 
@@ -47,7 +47,7 @@ impl List {
     }
 }
 
-impl Drop for List {
+impl<T> Drop for List<T> {
     fn drop(&mut self) {
         // let mut cur_link = mem::replace(&mut self.head, None);
         let mut cur_link = self.head.take();
