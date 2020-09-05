@@ -40,15 +40,20 @@ impl<T> List<T> {
         //     }
         // }
 
-        old_value.map(|node| { // See, you don't have to worry about the None branch. `map` knows to have that evaluate to None.
+        old_value.map(|node| {
+            // See, you don't have to worry about the None branch. `map` knows to have that evaluate to None.
             self.head = node.next;
             node.elem
         })
     }
 
     pub fn peek(&self) -> Option<&T> {
-        self.head.as_ref().map(|node| {
-            &node.elem
+        self.head.as_ref().map(|node| &node.elem)
+    }
+
+    pub fn peek_mut(&mut self) -> Option<&mut T> {
+        self.head.as_mut().map(|node| {
+            &mut node.elem // This is crazy to me, but powerful. You're going to give out a ref to the guts of the node, but allow them to mutate it.
         })
     }
 }
@@ -97,8 +102,21 @@ mod test {
         assert_eq!(list.pop(), None);
     }
 
-    // Fascinating. the next step is to manually implement Drop because otherwise, recursive drop calls could cuaes a stack overflow for large data structures. I simply have
-    //  never had to worry about that before. But now that I've looked into it, it makes complete sense. The default impl just doesn't work for you. The Rust Book doesn't do
-    //  a good job of covering things like this and helping you understand what is now on your plate. But it all goes back to being in control of memory. I think maybe the
-    //  Rust book is trying to make a false promise.
+    #[test]
+    fn peek() {
+        let mut list = List::new();
+        assert_eq!(list.peek(), None);
+        assert_eq!(list.peek_mut(), None);
+        list.push(1);
+        list.push(2);
+        list.push(3);
+
+        assert_eq!(list.peek(), Some(&3));
+        assert_eq!(list.peek_mut(), Some(&mut 3));
+
+        list.peek_mut().map(|value| *value = 42);
+
+        assert_eq!(list.peek(), Some(&42));
+        assert_eq!(list.pop(), Some(42));
+    }
 }
