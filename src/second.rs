@@ -32,13 +32,18 @@ impl List {
         // let old_value = mem::replace(&mut self.head, None);
         let old_value = self.head.take();
 
-        match old_value {
-            None => None,
-            Some(node) => {
-                self.head = node.next;
-                Some(node.elem)
-            }
-        }
+        // match old_value {
+        //     None => None,
+        //     Some(node) => {
+        //         self.head = node.next;
+        //         Some(node.elem)
+        //     }
+        // }
+
+        old_value.map(|node| { // See, you don't have to worry about the None branch. `map` knows to have that evaluate to None.
+            self.head = node.next;
+            node.elem
+        })
     }
 }
 
