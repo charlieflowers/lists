@@ -73,6 +73,40 @@ impl<T> Drop for List<T> {
     }
 }
 
+// Here's how I made list iterable, without looking at their stuff. But they did it differently! Mine did work. Need to understand why they did it differently.
+// pub struct ListIterator<T>(List<T>);
+
+// impl<T> Iterator for List<T> {
+//     type Item = T;
+
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.pop()
+//     }
+// }
+
+pub struct IntoIter<T>(List<T>);
+impl<T> List<T> {
+    // Note! You Can have more than one `impl` for the same struct!
+    pub fn into_iter(self) -> IntoIter<T> {
+        IntoIter(self)
+    }
+}
+
+impl<T> Iterator for IntoIter<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop()
+    }
+}
+
+// Alright, let's try to implement Iter. This time we won't be able to rely on List giving
+// us all the features we want. We'll need to roll our own. The basic logic we want is to hold
+// a pointer to the current node we want to yield next. Because that node may not exist (the
+//     list is empty or we're otherwise done iterating), we want that reference to be an
+//      Option. When we yield an element, we want to proceed to the current node's next
+//      node.
+
 #[cfg(test)]
 mod test {
 
@@ -118,5 +152,37 @@ mod test {
 
         assert_eq!(list.peek(), Some(&42));
         assert_eq!(list.pop(), Some(42));
+    }
+
+    #[test]
+    fn use_in_for() {
+        let mut list = List::new();
+        list.push(1);
+        list.push(2);
+        list.push(3);
+
+        let mut x = 42;
+
+        for i in list.into_iter() {
+            println!("Adding {} to {}", i, x);
+            x += i;
+        }
+
+        assert_eq!(x, 48);
+    }
+
+    #[test]
+    fn into_iter() {
+        let mut list = List::new();
+        list.push(1);
+        list.push(2);
+        list.push(3);
+
+        let mut iter = list.into_iter();
+
+        assert_eq!(iter.next(), Some(3));
+        assert_eq!(iter.next(), Some(2));
+        assert_eq!(iter.next(), Some(1));
+        assert_eq!(iter.next(), None);
     }
 }
