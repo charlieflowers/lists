@@ -36,6 +36,27 @@ impl<T> List<T> {
     }
 }
 
+// Question here! I want my iterator to simply use a List<T>. Each next item is head, and then it bumps its own position to tail. But
+//  because List doesn't have any references in it, I cxannot seem to talk about its lifetime, and I need to say that Iter must live as
+//  long as the List lives.
+//
+// Since I can't talk about List<T>'s lifetime, I'm forced to base my iterator on Option<Rc<Node<T>>> instead. Figure out if the other
+// //  option does exist.
+// pub struct Iter<'a, T>(List<T>)
+// where
+//     T: 'a;
+
+// impl<'a, T> Iterator for Iter<'a, T>
+// where
+//     T: 'a,
+// {
+//     type Item = &'a T;
+
+//     fn next(&mut self) -> Option<Self::Item> {
+//         todo!()
+//     }
+// }
+
 #[cfg(test)]
 mod test {
     use super::List;
