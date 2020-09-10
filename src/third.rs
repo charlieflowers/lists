@@ -40,22 +40,9 @@ impl<T> List<T> {
 //  because List doesn't have any references in it, I cxannot seem to talk about its lifetime, and I need to say that Iter must live as
 //  long as the List lives.
 //
-// Since I can't talk about List<T>'s lifetime, I'm forced to base my iterator on Option<Rc<Node<T>>> instead. Figure out if the other
-// //  option does exist.
-// pub struct Iter<'a, T>(List<T>)
-// where
-//     T: 'a;
-
-// impl<'a, T> Iterator for Iter<'a, T>
-// where
-//     T: 'a,
-// {
-//     type Item = &'a T;
-
-//     fn next(&mut self) -> Option<Self::Item> {
-//         todo!()
-//     }
-// }
+// HERE'S THE PROBLEM THERE -- YOU CAN'T USE LIST<T> BECAUSE LIST __OWNS__ WHAT IT POINTS TO! AND ITS A BIT SUBTLE TO SEE THAT! NOTICE THAT HEAD AND TAIL ACTUALLY 
+//  MESS WITH THE REFERENCE COUNT!!! That makes them SHARED OWNERS! But you want your iterator to work in the land of REFERENCES, meaning, NOT OWNERSHIP AT ALL. 
+//  So your iterator cannot be based on List. (It can be based on the second thing you tried, though. The part I didn't know was to use * to deref an Rc. Doing that next.)
 
 pub struct Iter<'a, T> {
     next: &'a Option<Rc<Node<T>>>, // Aha! They DID do it on Option<&Node<T>>. So how did they "esccape from" the RC?
