@@ -57,6 +57,29 @@ impl<T> List<T> {
 //     }
 // }
 
+pub struct Iter<'a, T> {
+    next: &'a Option<Rc<Node<T>>>,
+}
+
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(node) = self.next {
+            self.next = &node.next;
+            Some(&node.elem)
+        } else {
+            None
+        }
+    }
+}
+
+impl<T> List<T> {
+    pub fn iter(&self) -> Iter<T> {
+        Iter { next: &self.head }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::List;
@@ -77,5 +100,21 @@ mod test {
 
         let list = list.tail();
         assert_eq!(list.head(), None);
+    }
+
+    #[test]
+    fn iter() {
+        let list: List<i32> = List::new();
+        assert_eq!(list.head(), None);
+
+        let list = list.append(1).append(2).append(3);
+
+        let mut iter = list.iter();
+
+        assert_eq!(iter.next(), Some(&3));
+        assert_eq!(iter.next(), Some(&2));
+        assert_eq!(iter.next(), Some(&1));
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.next(), None);
     }
 }
