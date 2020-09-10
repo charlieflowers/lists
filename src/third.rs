@@ -36,43 +36,30 @@ impl<T> List<T> {
     }
 }
 
-// Question here! I want my iterator to simply use a List<T>. Each next item is head, and then it bumps its own position to tail. But
-//  because List doesn't have any references in it, I cxannot seem to talk about its lifetime, and I need to say that Iter must live as
-//  long as the List lives.
-//
-// HERE'S THE PROBLEM THERE -- YOU CAN'T USE LIST<T> BECAUSE LIST __OWNS__ WHAT IT POINTS TO! AND ITS A BIT SUBTLE TO SEE THAT! NOTICE THAT HEAD AND TAIL ACTUALLY 
-//  MESS WITH THE REFERENCE COUNT!!! That makes them SHARED OWNERS! But you want your iterator to work in the land of REFERENCES, meaning, NOT OWNERSHIP AT ALL. 
-//  So your iterator cannot be based on List. (It can be based on the second thing you tried, though. The part I didn't know was to use * to deref an Rc. Doing that next.)
-
 pub struct Iter<'a, T> {
-    next: &'a Option<Rc<Node<T>>>, // Aha! They DID do it on Option<&Node<T>>. So how did they "esccape from" the RC?
+    next: Option<&'a Node<T>>,
 }
 
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(node) = self.next {
-            self.next = &node.next;
-            Some(&node.elem)
-        } else {
-            None
-        }
+        self.next.map(|n| {
+            self.next = n.next.as_ref().map(|n2| &**n2);
+            &n.elem
+        })
     }
 }
 
-impl<T> List<T> {
-    pub fn iter(&self) -> Iter<T> {
-        // Iter { next: &self.head }
-
-        let x = &self.head;
-        let y = x.as_ref();
-        let z = y.map(|node| &**node); // Aha! THAT's how you do it! You DEREF the Rc!!!
-
-        let abc = y.map(|node| {
-            let d = *node;
-            let e = *d; // Yep! This is how you "get out of" an RC!! That's the missing piece I needed!
-        })
+impl<'a, T> List<T> {
+    pub fn iter(&'a self) -> Iter<'a, T> {
+        // Option<Rc<Node<T>>>
+        // let x = &self.head;
+        // let y = *&self.head.map(|n| *n).as_ref();
+        // Need: Option<&Node<T>>
+        Iter {
+            next: *&self.head.map(|n| *n).as_ref(),
+        }
     }
 }
 
