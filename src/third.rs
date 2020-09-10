@@ -58,7 +58,7 @@ impl<T> List<T> {
 // }
 
 pub struct Iter<'a, T> {
-    next: &'a Option<Rc<Node<T>>>,
+    next: &'a Option<Rc<Node<T>>>, // Aha! They DID do it on Option<&Node<T>>. So how did they "esccape from" the RC?
 }
 
 impl<'a, T> Iterator for Iter<'a, T> {
@@ -76,7 +76,16 @@ impl<'a, T> Iterator for Iter<'a, T> {
 
 impl<T> List<T> {
     pub fn iter(&self) -> Iter<T> {
-        Iter { next: &self.head }
+        // Iter { next: &self.head }
+
+        let x = &self.head;
+        let y = x.as_ref();
+        let z = y.map(|node| &**node); // Aha! THAT's how you do it! You DEREF the Rc!!!
+
+        let abc = y.map(|node| {
+            let d = *node;
+            let e = *d; // Yep! This is how you "get out of" an RC!! That's the missing piece I needed!
+        })
     }
 }
 
