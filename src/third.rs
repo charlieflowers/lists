@@ -53,13 +53,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
 
 impl<'a, T> List<T> {
     pub fn iter(&'a self) -> Iter<'a, T> {
-        // Option<Rc<Node<T>>>
-        // let x = &self.head;
-        // let y = *&self.head.map(|n| *n).as_ref();
-        // Need: Option<&Node<T>>
-        Iter {
-            next: *&self.head.map(|n| *n).as_ref(),
-        }
+        Iter { next: self.head.as_ref().map(|n| &**n)}
     }
 }
 
