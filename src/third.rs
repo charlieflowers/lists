@@ -53,7 +53,110 @@ impl<'a, T> Iterator for Iter<'a, T> {
 
 impl<'a, T> List<T> {
     pub fn iter(&'a self) -> Iter<'a, T> {
-        Iter { next: self.head.as_ref().map(|n| &**n)}
+        Iter {
+            next: self.head.as_ref().map(|n| &**n),
+        }
+    }
+}
+
+impl<T> Drop for List<T> {
+    fn drop(&mut self) {
+        // head is Option<Rc<Node<T>>>
+        // Get the next node.
+        // Drop the current node.
+        // Repeat.
+
+        // let _why_not_allowed = self.head.map(|_node| 42);
+
+        // OK. We only have a mut ref to self. So we cannot get ownership damn it. Yet, try_unwrap needs ownership!
+        // Ok, wait a minute. Maybe it is the indiana jones swap trick? Yes, of course. But ... how can THAT do it if we lack ownership? because, it uses unsafe code and swaps them!
+
+        // let a = self.head.take();
+
+        // let mut taken_head = self.head.take();
+        // let mut cur_head = &self.head;
+
+        // loop {
+        //     if let Some(cur_node) = *cur_head {
+        //         if let Ok(mut raw_node) = Rc::try_unwrap(cur_node) {
+        //             // raw_node has OWNERSHIP, so when raw_node goes out of scope, it will be dropped!
+        //             cur_head = &raw_node.next.take();
+        //         }
+        //     }
+        // }
+
+        // let mut current_head = self.head.take();
+
+        // while let Some(mut cur_node) = self.head.take() {
+        //     if let Ok(raw_node) = Rc::try_unwrap(cur_node) {
+        //         // raw_node has OWNERSHIP, so when raw_node goes out of scope, it will be dropped!
+        //         cur_node = raw_node.next;
+        //     }
+
+        // }
+
+        fn helper<T>(cur_head: &mut Option<Rc<Node<T>>>) -> Option<Rc<Node<T>>> {
+            if let Some(cur_node) = cur_head.take() {
+                if let Ok(raw_node) = Rc::try_unwrap(cur_node) {
+                    // raw_node has OWNERSHIP, so when raw_node goes out of scope, it will be dropped!
+                    let next_node = raw_node.next;
+                    return next_node;
+                }
+            }
+
+            None
+        }
+
+        let mut cur_head = &mut self.head;
+        let mut next_head : Option<Rc<Node<T>>>;
+
+        while cur_head.is_some() {
+            next_head = helper(cur_head);
+            cur_head = &mut next_head;
+        }
+
+        // // This WORKS! So I can do it once, but I can't turn it into a loop.
+        // if let Some(cur_node) = self.head.take() {
+        //     if let Ok(raw_node) = Rc::try_unwrap(cur_node) {
+        //         // raw_node has OWNERSHIP, so when raw_node goes out of scope, it will be dropped!
+        //         let next_node = raw_node.next;
+        //     }
+        // }
+
+        // Yes. NOW we HAVE ownership!
+
+        // if self.head.is_some() {
+        //     let x = self.head.unwrap();
+        //     let y = Rc::try_unwrap(x);
+
+        //     if let Ok(mut unwrapped_node) = y {
+        //         let _next_node = unwrapped_node.next;
+        //         unwrapped_node.next = None;
+        //     }
+        // }
+
+        // while let Some(cur_node) = self.head.as_ref() {
+        //     if let Ok(mut unwrapped_node) = Rc::try_unwrap(cur_node) {
+
+        //     }
+        // }
+
+        // OK, hold up. We need to get OWNERSHIP of the current node. Then, if there's only one count, we kill it.
+        // self.head.as_ref().map(|node| {
+        //     let x = Rc::try_unwrap(node);
+        //     if let Ok(mut unwrapped_node) = x {
+        //         let _next_node = unwrapped_node.next;
+        //         unwrapped_node.next = None;
+        //     }
+
+        //     // Here, x and unwrapped_node will go out of scope. They now own the Rc, so it will be dropped.
+        // });
+
+        // if let Some(cur_node) = &self.head {
+        //     let _next_node = cur_node.next.as_ref();
+        //     let _wtf = *cur_node;
+        //     let _x = Rc::try_unwrap(*cur_node); // I have a fucking ref to an Rc. I want to deref it to get an Rc. But that would MOVE the rc into try_unwrap, and the compiler says no.
+        // }
     }
 }
 
