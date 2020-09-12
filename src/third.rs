@@ -73,6 +73,11 @@ impl<T> Drop for List<T> {
             None
         }
 
+        // Ah, I see. His loop structure was cleaner:
+        // First, do take on the head
+        // THEN start the loop, and 
+        // ... take each `next`
+
         let mut cur_head = &mut self.head;
         let mut next_head: Option<Rc<Node<T>>>;
 
