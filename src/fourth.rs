@@ -60,6 +60,7 @@ impl<T> List<T> {
         // Wait. I think you ALSO have to take ownership of n2.prev, which is ANOTHEr pointer to the node to kill. And you let that
         //  go out of scope too. That's how you reduce the reference count.
 
+        // Looked at their impl. Mine is not right. Mainly, I don't do enough takes to clear the old pointers. Pick up here next time.
         let node_to_kill = self.head.take();
 
         match node_to_kill {
