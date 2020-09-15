@@ -52,29 +52,42 @@ impl<T> List<T> {
     }
 
     pub fn pop_front(&mut self) -> Option<T> {
-        // Take ownership of the node in self.head
-        // if it is none, return none
-        // if it has a value, rest easy knowing it will be destroyed when you go out of scope
-        // edit self.head to point to whatever node1.next points to
-        // edit node2.prev to be None
-        // Wait. I think you ALSO have to take ownership of n2.prev, which is ANOTHEr pointer to the node to kill. And you let that
-        //  go out of scope too. That's how you reduce the reference count.
+        // OK, first, the high level requirements, THEN the pseudocode, then the code.
+        // High level rqmts
+        // Take: list.head
+        // Take: n2.prev
+        // Set: list.head = n2
+        // That's it!
+        // ---
+        // pseudocode:
+        // if list empty, return none
+        // let ntk = self.head.take() // When this goes out of scope, one ref decreased
+        // let n2 = ntk.next;
+        // if n2.some()
+        //      n2.prev.take()
+        //      list.head = n2
+        // return ntk.elem // tricky
+        // That's it!
 
-        // Looked at their impl. Mine is not right. Mainly, I don't do enough takes to clear the old pointers. Pick up here next time.
         let node_to_kill = self.head.take();
 
         match node_to_kill {
             None => None,
             Some(ntk) => {
-                let n2 = ntk.borrow().next;
-                self.head = n2;
-                n2.map(|n| {
-                    n.borrow().prev.take();
-                });
-                let x = *ntk;
-                let y = x.get_mut();
+                let n2 = &ntk.borrow().next;
+                self.head = n2.clone();
 
-                Some(std::mem::take(&mut y.elem)) // I returned to them an OWNED T. It is now theirs to control. Is that right?
+                if let Some(inner_n2) = n2 {
+                    inner_n2.borrow_mut().prev.take();
+                }
+
+                // The only problem is, I don't know what to put here!
+                // But I bet they will cover this. They will probably require T to implement default.
+                // A shame to require that, when I am only deleting things anyway.
+                // I bet there is a way around that.
+                let elem = std::mem::replace(ntk.borrow_mut().elem, 42); 
+
+                Some(elem)
             }
         }
     }
