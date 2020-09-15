@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, fmt::Debug};
 
 pub struct List<T> {
     head: Link<T>,
@@ -7,6 +7,7 @@ pub struct List<T> {
 
 type Link<T> = Option<Rc<RefCell<Node<T>>>>;
 
+#[derive(Debug)]
 pub struct Node<T> {
     elem: T,
     next: Link<T>,
@@ -23,7 +24,7 @@ impl<T> Node<T> {
     }
 }
 
-impl<T> List<T> {
+impl<T: Debug> List<T> {
     pub fn new() -> Self {
         List {
             head: None,
@@ -91,9 +92,13 @@ impl<T> List<T> {
                 // My pop_front panics here. unwrap on a none. His doesn't. Figure out why.
                 // It panics when pop_front when there is one item left in the list.
                 //  Everything looks right to me -- scrutinize push_front next, to ensure you set up all the connections carefully.
-                
-                let a = Rc::try_unwrap(ntk).ok().unwrap();
-                let b = a.into_inner();
+
+                let a = Rc::try_unwrap(ntk);
+
+                println!("try_unwrap result is {:?}", a);
+
+                let unwrap = a.ok().unwrap();
+                let b = unwrap.into_inner();
                 Some(b.elem)
             }
         }
