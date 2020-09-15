@@ -56,6 +56,7 @@ impl<T> List<T> {
         // High level rqmts
         // Take: list.head
         // Take: n2.prev
+        // YOU FORGOT THIS ONE: n1.next used to point at n2. But you are removing n1, so you need to do a take() on n1.next!
         // Set: list.head = n2
         // That's it!
         // ---
@@ -75,15 +76,22 @@ impl<T> List<T> {
             None => None,
             Some(ntk) => {
                 {
-                    let n2 = &ntk.borrow().next;
-                    self.head = n2.clone();
+                    {
+                        let n2 = &ntk.borrow().next;
+                        self.head = n2.clone();
 
-                    if let Some(inner_n2) = n2 {
-                        inner_n2.borrow_mut().prev.take();
+                        if let Some(inner_n2) = n2 {
+                            inner_n2.borrow_mut().prev.take();
+                        }
                     }
+
+                    ntk.borrow_mut().next.take();
                 }
 
-                // Mp pop_front panics here. unwrap on a none. His doesn't. Figure out why.
+                // My pop_front panics here. unwrap on a none. His doesn't. Figure out why.
+                // It panics when pop_front when there is one item left in the list.
+                //  Everything looks right to me -- scrutinize push_front next, to ensure you set up all the connections carefully.
+                
                 let a = Rc::try_unwrap(ntk).ok().unwrap();
                 let b = a.into_inner();
                 Some(b.elem)
