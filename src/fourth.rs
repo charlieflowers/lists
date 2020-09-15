@@ -74,20 +74,18 @@ impl<T> List<T> {
         match node_to_kill {
             None => None,
             Some(ntk) => {
-                let n2 = &ntk.borrow().next;
-                self.head = n2.clone();
+                {
+                    let n2 = &ntk.borrow().next;
+                    self.head = n2.clone();
 
-                if let Some(inner_n2) = n2 {
-                    inner_n2.borrow_mut().prev.take();
+                    if let Some(inner_n2) = n2 {
+                        inner_n2.borrow_mut().prev.take();
+                    }
                 }
 
-                // The only problem is, I don't know what to put here!
-                // But I bet they will cover this. They will probably require T to implement default.
-                // A shame to require that, when I am only deleting things anyway.
-                // I bet there is a way around that.
-                let elem = std::mem::replace(ntk.borrow_mut().elem, 42); 
-
-                Some(elem)
+                let a = Rc::try_unwrap(ntk).ok().unwrap();
+                let b = a.into_inner();
+                Some(b.elem)
             }
         }
     }
